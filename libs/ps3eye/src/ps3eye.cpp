@@ -615,6 +615,20 @@ PS3EYECam::~PS3EYECam()
         debug("device closed\n");
     }
 }
+    
+std::string PS3EYECam::getDeviceId(){
+    
+    struct libusb_device_descriptor desc;
+    int r = libusb_get_device_descriptor(device_, &desc);
+    if (r < 0) {
+        fprintf(stderr, "failed to get device descriptor");
+        return;
+    }
+    printf("Manufacturer: %x\n" , desc.iManufacturer);
+    printf("Serial: %d\n" , desc.iSerialNumber);
+    
+    return "";
+}
 
 
 bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
@@ -624,7 +638,7 @@ bool PS3EYECam::init(uint32_t width, uint32_t height, uint8_t desiredFrameRate)
     {
         // open, set first config and claim interface
         int res = libusb_open(device_, &handle_);
-
+        
         if(res != 0)
         {
             debug("device open error: %d\n", res);
@@ -1413,5 +1427,19 @@ void PS3EYECam::sccb_w_array(const uint8_t (*data)[2], int len)
         data++;
     }
 }
+    
+    uint8_t PS3EYECam::getBusNumber(){
+        uint8_t result = libusb_get_bus_number(this->device_);
+        return result;
+    }
+    uint8_t PS3EYECam::getPortNumber(){
+        uint8_t result = libusb_get_port_number(this->device_);
+        return result;
+    }
+    uint8_t PS3EYECam::getDeviceAddress(){
+        uint8_t result = libusb_get_device_address(this->device_);
+        return result;
+    }
+
 
 } // namespace

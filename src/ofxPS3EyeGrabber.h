@@ -80,6 +80,13 @@ public:
     ofPixelFormat getPixelFormat() const override;
     void setVerbose(bool verbose) override;
     void setDeviceID(int deviceId) override;
+    
+    /// added SHA
+    void setBusNumber(int busNumber);
+    void setPortNumber(int portNumber);
+    void setDeviceAddress(int deviceAddress);
+    // end added SHA
+    
     void setDesiredFrameRate(int framerate) override;
     void videoSettings() override;
 
@@ -237,6 +244,12 @@ private:
 
     /// \brief The device id.
     std::size_t _deviceId = 0;
+    
+    //added SHA
+    int _bus_number = 0;
+    int _port_number = 0;
+    int _device_address = 0;
+    //end added SHA
 
     /// \brief The requested framerate.
     int _requestedFrameRate = 60;

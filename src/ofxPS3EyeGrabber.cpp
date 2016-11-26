@@ -207,7 +207,10 @@ std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
         device.id = id++;
         device.deviceName = "PS3-Eye";
         device.hardwareName = "None"; // TODO: get from libusb.
-        device.serialID = ""; // TODO: get from libusb.
+        int bus = libusb_get_bus_number((*iter)->device_);
+        int port = libusb_get_port_number((*iter)->device_);
+        int address = libusb_get_device_address((*iter)->device_);
+        device.serialID = "BUS:" + ofToString(bus)+ ", PORT:"  + ofToString(port)  + ", DADDRESS:"  + ofToString(address)  ; // TODO: get from libusb.
         // device.formats.push_back(...) // Formats ... we could list all of them ... but ...
         device.bAvailable = !(*iter)->isStreaming();;
         devices.push_back(device);
@@ -217,32 +220,94 @@ std::vector<ofVideoDevice> ofxPS3EyeGrabber::listDevices() const
     return devices;
 }
 
+void ofxPS3EyeGrabber::setBusNumber(int busNumber){
+    this->_bus_number = busNumber;
+}
+void ofxPS3EyeGrabber::setPortNumber(int portNumber){
+    this->_port_number = portNumber;
+}
+
+void ofxPS3EyeGrabber::setDeviceAddress(int deviceAddress){
+    this->_device_address = deviceAddress;
+}
+
 bool ofxPS3EyeGrabber::setup(int w, int h)
 {
     if (!_cam)
     {
         const auto& eyeDevices = ps3eye::PS3EYECam::getDevices();
 
-        if (_deviceId < eyeDevices.size())
-        {
-            _cam = eyeDevices[_deviceId];
-
-            bool success = _cam->init(w, h, _requestedFrameRate);
-
-            if (success)
+        if(this->_bus_number==0) {
+        
+            if (_deviceId < eyeDevices.size())
             {
-                start();
-                return true;
+                _cam = eyeDevices[_deviceId];
+
+                bool success = _cam->init(w, h, _requestedFrameRate);
+
+                if (success)
+                {
+                    start();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             else
             {
+                ofLogWarning("ofxPS3EyeGrabber::setup") << "Device id is out of range: " << _deviceId;
                 return false;
             }
         }
-        else
-        {
-            ofLogWarning("ofxPS3EyeGrabber::setup") << "Device id is out of range: " << _deviceId;
-            return false;
+        else{
+            bool cameraFound = false;
+            int cameraIndex = 0;
+            
+            while (cameraIndex<eyeDevices.size() && !cameraFound){
+                std::shared_ptr<ps3eye::PS3EYECam> auxCam = eyeDevices[cameraIndex];
+                uint8_t busNumber=0;
+                busNumber = auxCam->getBusNumber();
+                int busNumberInt = busNumber;
+                
+                uint8_t portNumber = 0;
+                portNumber = auxCam->getPortNumber();
+                int portNumberInt = portNumber;
+
+                if(this->_bus_number == busNumberInt && this->_port_number == portNumberInt){
+                    
+                    cameraFound = true;
+                    
+                }
+                else{
+                    //continue here
+                    cameraIndex += 1;
+                }
+                
+            }
+            
+            if(cameraFound){
+                _cam = eyeDevices[cameraIndex];
+                
+                bool success = _cam->init(w, h, _requestedFrameRate);
+                
+                if (success)
+                {
+                    start();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+
+
+            }
+            else{
+                ofLogWarning("ofxPS3EyeGrabber::setup") << "Device bus, port, and address not found ";
+                return false;
+            }
         }
     }
     else

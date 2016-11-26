@@ -10,6 +10,7 @@
 #include <vector>
 #include <chrono>
 #include <memory>
+#include <string>
 #include "libusb.h"
 
 
@@ -66,6 +67,11 @@ public:
 	void setBlueBalance(uint8_t val);
 	uint8_t getGreenBalance() const;
 	void setGreenBalance(uint8_t val);
+    std::string getDeviceId();
+    
+    uint8_t getBusNumber();
+    uint8_t getPortNumber();
+    uint8_t getDeviceAddress();
 
 	void setVerticalFlip(bool enable);
 	void setHorizontalFlip(bool enable);
@@ -95,6 +101,7 @@ public:
 		PRODUCT_ID = 0x2000
 	};
 
+    libusb_device* device_;
 private:
 	PS3EYECam(const PS3EYECam&);
 	void operator=(const PS3EYECam&);
@@ -154,7 +161,7 @@ private:
     uint16_t _manufacturer_id;
 
 	//usb stuff
-	libusb_device* device_;
+	
 	libusb_device_handle* handle_;
 	uint8_t usb_buf[64];
 	
